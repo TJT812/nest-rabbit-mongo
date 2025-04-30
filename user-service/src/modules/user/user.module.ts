@@ -13,6 +13,8 @@ import { userModelName, userSchema } from 'src/db/schemas/user.schema';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { AllExceptionsFilter } from 'src/http/all-exceptions.filter';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { servicesEnum } from 'src/common/enums';
 
 @Module({
   imports: [
@@ -34,6 +36,22 @@ import { AllExceptionsFilter } from 'src/http/all-exceptions.filter';
       inject: [mongoDbConfig.KEY],
     }),
     MongooseModule.forFeature([{ name: userModelName, schema: userSchema }]),
+    ClientsModule.registerAsync([
+      {
+        name: servicesEnum.NOTIFICATION_SERVICE,
+        useFactory: (rabbitMq: ConfigType<typeof rabbitMqConfig>) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [rabbitMq?.rabbitMqUrl ?? process.env.RABBIT_MQ_URL],
+            queue:
+              rabbitMq?.notificationQueue ??
+              process.env.RABBIT_MQ_NOTIFICATION_QUEUE,
+            noAck: false,
+            persistent: true,
+          },
+        }),
+      },
+    ]),
   ],
   controllers: [UserController],
   providers: [

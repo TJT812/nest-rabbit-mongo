@@ -9,8 +9,8 @@ const createUserSchema = z.object({
 });
 
 const getUsersSchema = z.object({
-  limit: z.number().int().positive().max(100).optional(),
-  page: z.number().int().min(1).optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
+  page: z.coerce.number().int().min(1).optional(),
 });
 
 const userIdSchema = z.object({

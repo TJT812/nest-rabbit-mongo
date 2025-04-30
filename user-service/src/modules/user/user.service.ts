@@ -1,19 +1,25 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import { UserAttributes } from 'src/common/interfaces';
 import { User, userModelName } from 'src/db/schemas/user.schema';
 import { CreateUserDto, getUsersResponse } from './dto/user.dto';
 import { utils } from 'src/common/utils';
+import { servicesEnum } from 'src/common/enums';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(userModelName) private users: Model<UserAttributes>,
+    @InjectConnection() private connection: Connection,
+    @Inject(servicesEnum.NOTIFICATION_SERVICE)
+    private notificationService: ClientProxy,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserAttributes> {
@@ -25,11 +31,26 @@ export class UserService {
       throw new BadRequestException(`User with this email already exists`);
     }
 
-    const newUser = await this.users.insertOne({
-      name,
-      email: normalizedEmail,
-    });
-    return newUser;
+    const session = await this.connection.startSession();
+    session.startTransaction();
+
+    try {
+      const newUser = await this.users.insertOne({
+        name,
+        email: normalizedEmail,
+      });
+
+      this.notificationService.send(
+        { cmd: 'user.created' },
+        { name: newUser.name, email: newUser.email },
+      );
+
+      await session.commitTransaction();
+      return newUser;
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    }
   }
 
   async findAll({ page = 1, limit = 100 }): Promise<getUsersResponse> {

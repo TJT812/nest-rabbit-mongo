@@ -10,17 +10,12 @@ async function bootstrap() {
   const port = Number(config.get<HttpConfig>('port') ?? process.env.PORT);
   const rabbitMqUrl =
     config.get<RabbitMqConfig>('rabbitMqUrl') ?? process.env.RABBIT_MQ_URL;
-  const notificationQueue =
-    config.get<RabbitMqConfig>('notificationQueue') ??
-    process.env.RABBIT_MQ_NOTIFICATION_QUEUE;
 
   app.connectMicroservice({
     transport: Transport.RMQ,
     options: {
       urls: rabbitMqUrl,
-      queue: notificationQueue,
-      noAck: false,
-      persistent: true,
+      queue: 'user',
     },
   });
   // add logger

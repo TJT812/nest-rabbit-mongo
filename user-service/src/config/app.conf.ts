@@ -11,7 +11,7 @@ interface MongoDbConfig {
 }
 
 interface RabbitMqConfig {
-  rabbitMqUser: string;
+  rabbitMqUrl: string;
   notificationQueue: string;
 }
 
@@ -36,7 +36,7 @@ const mongoDbConfig = registerAs(
 const rabbitMqConfig = registerAs(
   'rabbitMq',
   (): RabbitMqConfig => ({
-    rabbitMqUser: process.env.RABBIT_MQ_URL || '',
+    rabbitMqUrl: process.env.RABBIT_MQ_URL || '',
     notificationQueue: process.env.RABBIT_MQ_NOTIFICATION_QUEUE || '',
   }),
 );

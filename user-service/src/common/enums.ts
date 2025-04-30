@@ -10,4 +10,8 @@ enum StageEnum {
   dev = 'dev',
 }
 
-export { LogLevelEnum, StageEnum };
+const servicesEnum = {
+  NOTIFICATION_SERVICE: 'NOTIFICATION_SERVICE',
+};
+
+export { LogLevelEnum, StageEnum, servicesEnum };
