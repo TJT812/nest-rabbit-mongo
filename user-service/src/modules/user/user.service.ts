@@ -5,18 +5,18 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { User, UserAttributes } from 'src/common/interfaces';
-import { userConnectionName, userModelName } from 'src/db/schemas/user.schema';
+import { UserAttributes } from 'src/common/interfaces';
+import { User, userModelName } from 'src/db/schemas/user.schema';
 import { CreateUserDto, getUsersResponse } from './dto/user.dto';
 import { utils } from 'src/common/utils';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(userModelName, userConnectionName) private users: Model<User>,
+    @InjectModel(userModelName) private users: Model<UserAttributes>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<UserAttributes> {
     const { name, email } = createUserDto;
 
     const normalizedEmail = utils.normalizeEmail(email);
@@ -25,7 +25,10 @@ export class UserService {
       throw new BadRequestException(`User with this email already exists`);
     }
 
-    const newUser = this.users.insertOne({ name, email: normalizedEmail });
+    const newUser = await this.users.insertOne({
+      name,
+      email: normalizedEmail,
+    });
     return newUser;
   }
 
@@ -36,7 +39,7 @@ export class UserService {
       .skip((page - 1) * limit)
       .sort({ createdAt: -1 });
 
-    const usersFormatted = users.map((user) => this.formatUser(user));
+    const usersFormatted = users.map((user) => user);
     const count = await this.users.countDocuments({}, { limit: 10000 });
 
     return {
@@ -52,7 +55,7 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User is not found`);
     }
-    return this.formatUser(user);
+    return user;
   }
 
   async findByEmail(email: string): Promise<{ _id: Types.ObjectId } | null> {
@@ -80,7 +83,7 @@ export class UserService {
     if (!updatedUser) {
       throw new NotFoundException(`User is not found`);
     }
-    return this.formatUser(updatedUser);
+    return updatedUser;
   }
 
   async remove(id: string): Promise<UserAttributes> {
@@ -89,7 +92,7 @@ export class UserService {
     if (!deletedUser) {
       throw new NotFoundException(`User is not found`);
     }
-    return this.formatUser(deletedUser);
+    return deletedUser;
   }
 
   private formatUser(user: User): UserAttributes {

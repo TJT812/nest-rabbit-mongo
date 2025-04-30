@@ -30,4 +30,4 @@ COPY --from=build_container --chown=node:node /install ./
 
 EXPOSE $PORT
 
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]

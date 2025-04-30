@@ -1,23 +1,33 @@
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { HttpConfig } from './config/app.conf';
+import { HttpConfig, RabbitMqConfig } from './config/app.conf';
 import { UserModule } from './modules/user/user.module';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
-  const config = new ConfigService<HttpConfig>();
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    UserModule,
-    {
-      transport: Transport.TCP,
-      options: {
-        port: Number(config.getOrThrow('port')),
-      },
-    },
-    // add logger
-  );
+  const app = await NestFactory.create(UserModule);
+  const config = app.get(ConfigService);
+  const port = Number(config.get<HttpConfig>('port') ?? process.env.PORT);
+  const rabbitMqUrl =
+    config.get<RabbitMqConfig>('rabbitMqUrl') ?? process.env.RABBIT_MQ_URL;
+  const notificationQueue =
+    config.get<RabbitMqConfig>('notificationQueue') ??
+    process.env.RABBIT_MQ_NOTIFICATION_QUEUE;
 
-  await app.listen();
+  app.connectMicroservice({
+    transport: Transport.RMQ,
+    options: {
+      urls: rabbitMqUrl,
+      queue: notificationQueue,
+      noAck: false,
+      persistent: true,
+    },
+  });
+  // add logger
+  await app.startAllMicroservices();
+  await app.listen(port, () => {
+    console.log(`User service is running on: http://localhost:${port}`);
+  });
 }
 
 bootstrap();

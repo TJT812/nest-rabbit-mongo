@@ -12,7 +12,7 @@ interface MongoDbConfig {
 
 interface RabbitMqConfig {
   rabbitMqUser: string;
-  rabbitMqPassword: string;
+  notificationQueue: string;
 }
 
 interface AppConfig {
@@ -20,27 +20,12 @@ interface AppConfig {
   stage: StageEnum;
 }
 
-function getHttpConfig(): HttpConfig {
-  return {
+const httpConfig = registerAs(
+  'http',
+  (): HttpConfig => ({
     port: Number(process.env.PORT) || 3001,
-  };
-}
-
-function getRabbitMqConfig(): RabbitMqConfig {
-  return {
-    rabbitMqUser: process.env.RABBITMQ_DEFAULT_USER || '',
-    rabbitMqPassword: process.env.RABBITMQ_DEFAULT_PASS || '',
-  };
-}
-
-function getAppConfig(): AppConfig {
-  return {
-    logLevel: (process.env.LOG_LEVEL as LogLevelEnum) || LogLevelEnum.info,
-    stage: (process.env.STAGE as StageEnum) || StageEnum.dev,
-  };
-}
-//
-
+  }),
+);
 const mongoDbConfig = registerAs(
   'mongoDb',
   (): MongoDbConfig => ({
@@ -48,15 +33,28 @@ const mongoDbConfig = registerAs(
     mongoDbName: process.env.MONGO_DB_NAME,
   }),
 );
+const rabbitMqConfig = registerAs(
+  'rabbitMq',
+  (): RabbitMqConfig => ({
+    rabbitMqUser: process.env.RABBIT_MQ_URL || '',
+    notificationQueue: process.env.RABBIT_MQ_NOTIFICATION_QUEUE || '',
+  }),
+);
+const appConfig = registerAs(
+  'app',
+  (): AppConfig => ({
+    logLevel: (process.env.LOG_LEVEL as LogLevelEnum) || LogLevelEnum.info,
+    stage: (process.env.STAGE as StageEnum) || StageEnum.dev,
+  }),
+);
 
 export {
-  getHttpConfig,
-  getRabbitMqConfig,
-  getAppConfig,
   HttpConfig,
   MongoDbConfig,
   RabbitMqConfig,
   AppConfig,
-  //
+  httpConfig,
   mongoDbConfig,
+  rabbitMqConfig,
+  appConfig,
 };

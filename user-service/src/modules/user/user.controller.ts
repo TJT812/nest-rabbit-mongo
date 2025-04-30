@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { User, UserAttributes } from 'src/common/interfaces';
+import { UserAttributes } from 'src/common/interfaces';
 import {
   CreateUserDto,
   GetUsersDto,
@@ -37,7 +37,7 @@ export class UserController {
   }
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto): Promise<User> {
+  create(@Body() createUserDto: CreateUserDto): Promise<UserAttributes> {
     return this.userService.create(createUserDto);
   }
 

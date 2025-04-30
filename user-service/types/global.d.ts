@@ -7,8 +7,8 @@ declare global {
       LOG_LEVEL: string;
       PORT: number;
       STAGE: string;
-      RABBITMQ_DEFAULT_USER: string;
-      RABBITMQ_DEFAULT_PASS: string;
+      RABBIT_MQ_URL: string;
+      RABBIT_MQ_NOTIFICATION_QUEUE: string;
     }
   }
 }
