@@ -1,0 +1,72 @@
+version: '3'
+networks:
+  app-network:
+    driver: bridge
+services:
+  user-service:
+    image: user-service:latest
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+        restart: true
+      rabbitmq:
+        condition: service_healthy
+        restart: true
+    environment:
+      - MONGO_DB_CONN_STR=mongodb://user:pass@mongodb:27017/task_db
+      - RABBIT_MQ_URL=amqp://guest:pass@rabbitmq:5672
+      - LOG_LEVEL=info
+      - PORT=3001
+      - STAGE=prod
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=pass
+      
+  mongodb:
+    image: mongodb/mongodb-community-server
+    environment:
+      - MONGODB_INITDB_ROOT_USERNAME=user
+      - MONGODB_INITDB_ROOT_PASSWORD=pass
+      - MONGO_INITDB_DATABASE=task_db
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+    volumes:
+      - ./db_data:/data/db
+    healthcheck:
+      test: ["CMD","mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=pass
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - app-network
+    volumes:
+      - ./rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq_log:/var/log/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    restart: always
+
+volumes:
+  db_data:
+  rabbitmq_data:
+  rabbitmq_log:
