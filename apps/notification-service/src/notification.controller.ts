@@ -1,23 +1,25 @@
 import { Controller, Get } from '@nestjs/common';
-import { NotificationServiceService } from './notification-service.service';
+import { NotificationService } from './notification.service';
 import { Ctx, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
 import { userEventTypes } from './common/enums';
 import { UserPayload } from './common/interfaces';
 
 @Controller()
 export class NotificationServiceController {
-  constructor(private readonly notificationServiceService: NotificationServiceService) {}
+  constructor(private readonly notificationService: NotificationService) {}
 
   @MessagePattern({cmd: userEventTypes.USER_CREATED})
   onUserCreated(@Payload() data: UserPayload, @Ctx() context: RmqContext) {
-    this.notificationServiceService.onUserCreated(data);
+    this.notificationService.onUserCreated(data);
     this.ack(context);
+    return true
   } 
 
   @MessagePattern({cmd: userEventTypes.USER_DELETED})
   onUserDeleted(@Payload() data: UserPayload, @Ctx() context: RmqContext) {
-    this.notificationServiceService.onUserDeleted(data);
+    this.notificationService.onUserDeleted(data);
     this.ack(context);
+    return true 
   } 
 
   ack(context: RmqContext) {

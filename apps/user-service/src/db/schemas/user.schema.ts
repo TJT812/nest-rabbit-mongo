@@ -5,6 +5,7 @@ export interface User extends Document {
   name: string;
   email: string;
   createdAt: Date;
+  deletedAt: Date;
 }
 
 const userSchema = new mongoose.Schema(
@@ -13,7 +14,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
   },
   {
-    timestamps: { createdAt: 'created_at' },
+    timestamps: { createdAt: 'created_at', updatedAt: false },
     collection: 'users',
     autoCreate: true,
   },

@@ -29,8 +29,8 @@ const httpConfig = registerAs(
 const mongoDbConfig = registerAs(
   'mongoDb',
   (): MongoDbConfig => ({
-    mongoDbConnectionString: process.env.MONGO_DB_CONN_STR,
-    mongoDbName: process.env.MONGO_DB_NAME,
+    mongoDbConnectionString: process.env.MONGO_DB_CONN_STR || '',
+    mongoDbName: process.env.MONGO_DB_NAME || '',
   }),
 );
 const rabbitMqConfig = registerAs(

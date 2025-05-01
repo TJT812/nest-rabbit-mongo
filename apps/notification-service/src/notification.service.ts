@@ -3,7 +3,7 @@ import { Ctx, Payload, RmqContext } from '@nestjs/microservices';
 import { UserPayload } from './common/interfaces';
 
 @Injectable()
-export class NotificationServiceService {
+export class NotificationService {
   onUserCreated(data: UserPayload): void {
     console.log(`Hello, ${data.name}, notification was sent to ${data.email}`);
   }

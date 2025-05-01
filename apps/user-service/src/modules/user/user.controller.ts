@@ -51,7 +51,7 @@ export class UserController {
   }
 
   @Delete(':id')
-  remove(@Param() params: UserIdDto): Promise<UserAttributes> {
+  remove(@Param() params: UserIdDto): Promise<UserIdDto> {
     const { id } = params;
     return this.userService.remove(id);
   }

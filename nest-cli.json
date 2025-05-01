@@ -4,7 +4,7 @@
   "sourceRoot": "apps/user-service/src",
   "compilerOptions": {
     "webpack": true,
-    "tsConfigPath": "apps/user-service/tsconfig.build.json"
+    "tsConfigPath": "apps/user-service/tsconfig.app.json"
   },
   "projects": {
     "user-service": {
@@ -13,7 +13,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/user-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/user-service/tsconfig.build.json"
+        "tsConfigPath": "apps/user-service/tsconfig.app.json"
       }
     },
     "notification-service": {

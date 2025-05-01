@@ -8,10 +8,11 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model, Types } from 'mongoose';
 import { UserAttributes } from '../../common/interfaces';
 import { User, userModelName } from '../../db/schemas/user.schema';
-import { CreateUserDto, getUsersResponse } from './dto/user.dto';
+import { CreateUserDto, getUsersResponse, UserIdDto } from './dto/user.dto';
 import { utils } from '../../common/utils';
 import { servicesEnum } from '../../common/enums';
 import { ClientProxy } from '@nestjs/microservices';
+import { userEventTypes } from 'apps/notification-service/src/common/enums';
 
 @Injectable()
 export class UserService {
@@ -31,26 +32,30 @@ export class UserService {
       throw new BadRequestException(`User with this email already exists`);
     }
 
-    const session = await this.connection.startSession();
-    session.startTransaction();
+    const newUser = await this.users.insertOne({
+      name,
+      email: normalizedEmail,
+    });
 
+    console.log('Message sent to notification service');
+
+    let notificationResult = false;
     try {
-      const newUser = await this.users.insertOne({
-        name,
-        email: normalizedEmail,
-      });
-
-      this.notificationService.send(
-        { cmd: 'user.created' },
-        { name: newUser.name, email: newUser.email },
+      notificationResult = await utils.observe(
+        this.notificationService.send(
+          { cmd: userEventTypes.USER_CREATED },
+          { name, email: normalizedEmail },
+        ),
       );
-
-      await session.commitTransaction();
-      return newUser;
     } catch (err) {
-      await session.abortTransaction();
+      if (newUser) {
+        await this.users.findByIdAndDelete(newUser._id);
+      }
       throw err;
     }
+
+    console.log('Result from notification service', notificationResult);
+    return newUser;
   }
 
   async findAll({ page = 1, limit = 100 }): Promise<getUsersResponse> {
@@ -107,13 +112,34 @@ export class UserService {
     return updatedUser;
   }
 
-  async remove(id: string): Promise<UserAttributes> {
-    const deletedUser = await this.users.findByIdAndDelete(id);
+  async remove(id: string): Promise<UserIdDto> {
+    const user = await this.users.findByIdAndUpdate(id, {
+      deletedAt: new Date(),
+    });
 
-    if (!deletedUser) {
+    if (!user) {
       throw new NotFoundException(`User is not found`);
     }
-    return deletedUser;
+
+    console.log('Message sent to notification service');
+
+    let notificationResult = false;
+    try {
+      notificationResult = await utils.observe(
+        this.notificationService.send(
+          { cmd: userEventTypes.USER_DELETED },
+          { name: user.name, email: user.email },
+        ),
+      );
+    } catch (err) {
+      await this.users.findByIdAndUpdate(id, {
+        deletedAt: null,
+      });
+      throw err;
+    }
+    await this.users.deleteOne({ _id: id });
+
+    return { id };
   }
 
   private formatUser(user: User): UserAttributes {

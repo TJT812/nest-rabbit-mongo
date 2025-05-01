@@ -46,8 +46,7 @@ import { servicesEnum } from '../../common/enums';
             queue:
               rabbitMq?.notificationQueue ??
               process.env.RABBIT_MQ_NOTIFICATION_QUEUE,
-            noAck: false,
-            persistent: true,
+            noAck: true,
           },
         }),
       },
