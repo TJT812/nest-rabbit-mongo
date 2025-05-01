@@ -3,34 +3,43 @@ import {
   Catch,
   HttpException,
   HttpStatus,
+  Injectable,
+  Logger,
 } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 @Catch()
+@Injectable()
 export class AllExceptionsFilter extends BaseExceptionFilter {
+  constructor(private readonly logger: Logger) {
+    super();
+  }
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const req = ctx.getResponse<Request>();
+    const req = ctx.getRequest<Request>();
+    const res = ctx.getResponse<Response>();
 
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    console.log(
-      {
-        err: exception,
-        status,
-        method: req.method,
-        url: req.url,
-        query: req.query,
-        pathParams: req.params,
-        path: req.path,
-      },
-      'An error occurred while processing the request',
-    );
+    this.logger.error({
+      err: exception,
+      status,
+      method: req.method,
+      path: req.path,
+      stack: exception instanceof Error ? exception.stack : null,
+    });
 
-    super.catch(exception, host);
+    res.status(status).json({
+      statusCode: status,
+      message:
+        exception instanceof HttpException
+          ? exception.message
+          : 'Internal Server Error',
+    });
   }
 }

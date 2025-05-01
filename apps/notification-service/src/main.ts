@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { NotificationServiceModule } from './notification.module';
+import { NotificationServiceModule } from './notifications/notification.module';
 import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
@@ -13,7 +13,7 @@ async function bootstrap() {
       noAck: false,
     },
   });
-  // add logger
+
   await app.startAllMicroservices();
 }
 bootstrap();

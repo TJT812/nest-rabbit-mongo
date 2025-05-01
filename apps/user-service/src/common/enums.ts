@@ -14,4 +14,10 @@ const servicesEnum = {
   NOTIFICATION_SERVICE: 'NOTIFICATION_SERVICE',
 };
 
-export { LogLevelEnum, StageEnum, servicesEnum };
+const userEventTypes = {
+  USER_CREATED: 'user.created',
+  USER_UPDATED: 'user.updated',
+  USER_DELETED: 'user.deleted',
+};
+
+export { LogLevelEnum, StageEnum, servicesEnum, userEventTypes };

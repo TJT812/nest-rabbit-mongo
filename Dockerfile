@@ -1,16 +1,17 @@
 # Build stage
 FROM node:23-slim AS build_container
 
+ARG APP_NAME=$APP_NAME
 ARG NODE_ENV
 ENV NODE_ENV=$NODE_ENV
 
 WORKDIR /install
 
-COPY package*.json ./
+COPY package*.json tsconfig.json ./
 
-RUN npm ci 
+RUN npm ci
 
-COPY . .
+COPY ./apps/${APP_NAME} .
 
 ENV NODE_ENV=production
 RUN npm run build && \
@@ -19,6 +20,7 @@ RUN npm run build && \
 # Final stage
 FROM node:23-slim AS final
 
+ARG APP_NAME=$APP_NAME
 ARG NODE_ENV=production
 ENV NODE_ENV=$NODE_ENV
 
@@ -30,4 +32,4 @@ COPY --from=build_container --chown=node:node /install ./
 
 EXPOSE $PORT
 
-CMD ["node", "dist/main.js"]
+CMD node dist/${APP_NAME}/main.js

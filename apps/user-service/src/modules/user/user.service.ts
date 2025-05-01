@@ -2,25 +2,26 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model, Types } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { UserAttributes } from '../../common/interfaces';
 import { User, userModelName } from '../../db/schemas/user.schema';
 import { CreateUserDto, getUsersResponse, UserIdDto } from './dto/user.dto';
 import { utils } from '../../common/utils';
 import { servicesEnum } from '../../common/enums';
 import { ClientProxy } from '@nestjs/microservices';
-import { userEventTypes } from 'apps/notification-service/src/common/enums';
+import { userEventTypes } from '../../common/enums';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(userModelName) private users: Model<UserAttributes>,
-    @InjectConnection() private connection: Connection,
     @Inject(servicesEnum.NOTIFICATION_SERVICE)
     private notificationService: ClientProxy,
+    private readonly logger: Logger,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserAttributes> {
@@ -37,7 +38,7 @@ export class UserService {
       email: normalizedEmail,
     });
 
-    console.log('Message sent to notification service');
+    this.logger.log('Message sent to notification service');
 
     let notificationResult = false;
     try {
@@ -48,13 +49,17 @@ export class UserService {
         ),
       );
     } catch (err) {
+      this.logger.error(
+        'Error while sending message to notification service',
+        err,
+      );
       if (newUser) {
         await this.users.findByIdAndDelete(newUser._id);
       }
       throw err;
     }
 
-    console.log('Result from notification service', notificationResult);
+    this.logger.log('Result from notification service', notificationResult);
     return newUser;
   }
 
@@ -121,7 +126,7 @@ export class UserService {
       throw new NotFoundException(`User is not found`);
     }
 
-    console.log('Message sent to notification service');
+    this.logger.log('Message sent to notification service');
 
     let notificationResult = false;
     try {

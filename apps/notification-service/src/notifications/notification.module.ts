@@ -2,11 +2,9 @@ import { Module } from '@nestjs/common';
 import { NotificationServiceController } from './notification.controller';
 import { NotificationService } from './notification.service';
 import { ConfigModule } from '@nestjs/config';
-import { appConfig, httpConfig, rabbitMqConfig } from './config/app.conf';
-import { APP_FILTER } from '@nestjs/core';
-import { AllExceptionsFilter } from './http/all-exceptions.filter';
+import { appConfig, httpConfig, rabbitMqConfig } from '../config/app.conf';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { servicesEnum } from './common/enums';
+import { servicesEnum } from '../common/enums';
 
 @Module({
   imports: [
@@ -30,9 +28,6 @@ import { servicesEnum } from './common/enums';
     ]),
   ],
   controllers: [NotificationServiceController],
-  providers: [
-    NotificationService,
-    { provide: APP_FILTER, useClass: AllExceptionsFilter },
-  ],
+  providers: [NotificationService],
 })
 export class NotificationServiceModule {}

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Ctx, Payload, RmqContext } from '@nestjs/microservices';
-import { UserPayload } from './common/interfaces';
+import { UserPayload } from '../common/interfaces';
 
 @Injectable()
 export class NotificationService {

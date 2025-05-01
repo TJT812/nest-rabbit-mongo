@@ -1,28 +1,64 @@
 networks:
   app-network:
 services:
-  # user-service:
-  #   image: user-service:latest
-  #   ports:
-  #     - "3001:3001"
-  #   networks:
-  #     - app-network
-  #   depends_on:
-  #     mongodb:
-  #       condition: service_healthy
-  #       restart: true
-  #     rabbitmq:
-  #       condition: service_healthy
-  #       restart: true
-  #   environment:
-  #     - MONGO_DB_CONN_STR=mongodb://user:pass@mongodb:27017/task_db
-  #     - RABBIT_MQ_URL=amqp://guest:pass@rabbitmq:5672
-  #     - LOG_LEVEL=info
-  #     - PORT=3001
-  #     - STAGE=prod
-  #     - RABBITMQ_DEFAULT_USER=guest
-  #     - RABBITMQ_DEFAULT_PASS=pass
-      
+  user-service:
+    image: user-service:latest
+    build: 
+      context: .
+      args: 
+        - APP_NAME=user-service
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+        restart: true
+      rabbitmq:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://user-service:3001/health"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    restart: always
+    environment:
+      - MONGO_DB_CONN_STR=mongodb://user:pass@mongodb/task_db
+      - RABBIT_MQ_URL=amqp://guest:guest@rabbitmq
+      - RABBIT_MQ_NOTIFICATION_QUEUE=notification
+      - LOG_LEVEL=info
+      - MONGO_DB_NAME=task_db
+      - PORT=3001
+      - STAGE=prod
+
+  notification-service:
+    image: notification-service:latest
+    build: 
+      context: .
+      args: 
+        - APP_NAME=notification-service
+    networks:
+      - app-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://user-service:3001/health"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    restart: always
+    environment:
+      - RABBIT_MQ_URL=amqp://guest:guest@rabbitmq
+      - RABBIT_MQ_NOTIFICATION_QUEUE=notification
+      - LOG_LEVEL=info
+      - STAGE=prod
+
   mongodb:
     image: mongodb/mongodb-community-server
     environment:
@@ -45,9 +81,6 @@ services:
 
   rabbitmq:
     image: rabbitmq
-    # environment:
-      # - RABBITMQ_DEFAULT_USER=user
-      # - RABBITMQ_DEFAULT_PASS=pass
     ports:
       - "5672:5672"
       - "15672:15672"
