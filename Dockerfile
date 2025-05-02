@@ -14,7 +14,7 @@ RUN npm ci
 COPY ./apps/${APP_NAME} .
 
 ENV NODE_ENV=production
-RUN npm run build && \
+RUN npm run build ${APP_NAME} && \
     npm prune
 
 # Final stage
@@ -26,7 +26,12 @@ ENV NODE_ENV=$NODE_ENV
 
 WORKDIR /usr/src/app
 
+RUN  apt-get update \
+    && apt-get install -y wget \
+    && rm -rf /var/lib/apt/lists/*
+
 USER node
+
 
 COPY --from=build_container --chown=node:node /install ./
 

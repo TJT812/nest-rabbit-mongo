@@ -19,7 +19,7 @@ services:
         condition: service_healthy
         restart: true
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://user-service:3001/health"]
+      test: ["CMD", "wget", "-qO-", "http://user-service:3001/health", "|", "grep", "-q", "ok"]
       interval: 10s
       retries: 5
       start_period: 30s
@@ -47,7 +47,7 @@ services:
         condition: service_healthy
         restart: true
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://user-service:3001/health"]
+      test: ["CMD", "wget", "-qO-", "http://user-service:3001/health/notification-service", "|", "grep", "-q", "ok"]
       interval: 10s
       retries: 5
       start_period: 30s

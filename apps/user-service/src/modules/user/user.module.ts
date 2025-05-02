@@ -1,4 +1,4 @@
-import { Logger, Module } from '@nestjs/common';
+import { Global, Logger, Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { ConfigModule, ConfigType } from '@nestjs/config';
@@ -37,21 +37,25 @@ import { HealthModule } from '../health/health.module';
       inject: [mongoDbConfig.KEY],
     }),
     MongooseModule.forFeature([{ name: userModelName, schema: userSchema }]),
-    ClientsModule.registerAsync([
-      {
-        name: servicesEnum.NOTIFICATION_SERVICE,
-        useFactory: (rabbitMq: ConfigType<typeof rabbitMqConfig>) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [rabbitMq?.rabbitMqUrl ?? process.env.RABBIT_MQ_URL],
-            queue:
-              rabbitMq?.notificationQueue ??
-              process.env.RABBIT_MQ_NOTIFICATION_QUEUE,
-            noAck: true,
-          },
-        }),
-      },
-    ]),
+    ClientsModule.registerAsync({
+      clients: [
+        {
+          name: servicesEnum.NOTIFICATION_SERVICE,
+          useFactory: (rabbitMq: ConfigType<typeof rabbitMqConfig>) => ({
+            transport: Transport.RMQ,
+            options: {
+              urls: [rabbitMq?.rabbitMqUrl ?? process.env.RABBIT_MQ_URL],
+              queue:
+                rabbitMq?.notificationQueue ??
+                process.env.RABBIT_MQ_NOTIFICATION_QUEUE,
+              noAck: true,
+            },
+          }),
+          inject: [rabbitMqConfig.KEY],
+        },
+      ],
+      isGlobal: true,
+    }),
   ],
   controllers: [UserController],
   providers: [

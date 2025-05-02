@@ -30,6 +30,13 @@ export class NotificationServiceController {
     return true;
   }
 
+  @UseFilters(new ExceptionFilter())
+  @MessagePattern({ cmd: 'health' })
+  healthCheck(@Payload() _: unknown, @Ctx() context: RmqContext) {
+    this.ack(context);
+    return true;
+  }
+
   ack(context: RmqContext) {
     const channel = context.getChannelRef();
     const originalMessage = context.getMessage();
